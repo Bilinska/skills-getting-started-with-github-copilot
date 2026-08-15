@@ -11,6 +11,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from pathlib import Path
+from .services import signup_participant, unregister_participant, get_all_activities
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -94,39 +95,19 @@ def root():
 
 
 @app.get("/activities")
-def get_activities():
-    return activities
+def get_activities_endpoint():
+    return get_all_activities(activities)
 
 
 @app.post("/activities/{activity_name}/signup")
-def signup_for_activity(activity_name: str, email: str):
+def signup_for_activity_endpoint(activity_name: str, email: str):
     """Sign up a student for an activity"""
-    if activity_name not in activities:
-        raise HTTPException(status_code=404, detail="Activity not found")
-
-    # Get the specific activity
-    activity = activities[activity_name]
-
-    # Validate activity exists
-    if not activity:
-        raise HTTPException(status_code=404, detail="Activity not found")
-
-    # Add student
-    activity["participants"].append(email)
-    return {"message": f"Signed up {email} for {activity_name}"}
+    message = signup_participant(activities, activity_name, email)
+    return {"message": message}
 
 
 @app.delete("/activities/{activity_name}/signup")
-def unregister_from_activity(activity_name: str, email: str):
+def unregister_from_activity_endpoint(activity_name: str, email: str):
     """Unregister a student from an activity"""
-    if activity_name not in activities:
-        raise HTTPException(status_code=404, detail="Activity not found")
-
-    activity = activities[activity_name]
-
-    # Remove student if they exist in the list
-    if email in activity["participants"]:
-        activity["participants"].remove(email)
-        return {"message": f"Unregistered {email} from {activity_name}"}
-    else:
-        raise HTTPException(status_code=404, detail="Participant not found")
+    message = unregister_participant(activities, activity_name, email)
+    return {"message": message}
